@@ -55,12 +55,9 @@ During development the frontend uses a Vite proxy to communicate with the backen
 
 ### Run full stack locally
 
-Start backend (in backend repository):
+For full-stack setup and backend run instructions, see the backend repository README:
 
-```bash
-# example command (depends on backend project)
-python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
+- Backend (FastAPI): https://github.com/hanna-malash/quantlab-backend
 
 Start frontend (in this repository):
 
@@ -101,15 +98,3 @@ src/
 - `npm run dev` — start dev server
 - `npm run build` — build for production
 - `npm run preview` — locally preview production build
-
-## Contributing
-
-Pull requests are welcome. Describe the changes and the reason. For large features, please open an issue before implementation.
-
-## License
-
-MIT (change if you use another license)
-
----
-
-If you want, I can add API examples, environment variables, or deployment instructions. Keep it minimal or tell me what to expand.
