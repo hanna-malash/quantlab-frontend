@@ -1,6 +1,2 @@
-﻿#!/bin/sh
-if command -v npx >/dev/null 2>&1; then
-  npx lint-staged
-else
-  cmd.exe /c ".husky\pre-commit.cmd"
-fi
+#!/bin/sh
+npx lint-staged
