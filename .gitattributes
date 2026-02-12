@@ -1,0 +1,2 @@
+﻿# Ensure husky hooks are always LF (works on Windows + Mac/Linux)
+.husky/* text eol=lf
