@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { getHealth } from "@/shared/api/health";
 
 const linkStyle = ({ isActive }: { isActive: boolean }) => {
   return {
@@ -13,8 +14,8 @@ const linkStyle = ({ isActive }: { isActive: boolean }) => {
 
 async function checkBackend(): Promise<boolean> {
   try {
-    const response = await fetch("/api/health");
-    return response.ok;
+    const result = await getHealth();
+    return result.status === "ok";
   } catch {
     return false;
   }
