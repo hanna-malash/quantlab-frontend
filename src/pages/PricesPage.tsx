@@ -14,20 +14,20 @@ import type { PricePoint } from "@/shared/api/prices";
 type UiState = "idle" | "loading" | "success";
 
 const mockData: PricePoint[] = [
-  { date: "01", close: 100 },
-  { date: "02", close: 105 },
-  { date: "03", close: 102 },
-  { date: "04", close: 110 },
-  { date: "05", close: 108 },
+  { timestamp_utc: "2024-01-01T00:00:00Z", close: 42050 },
+  { timestamp_utc: "2024-01-01T01:00:00Z", close: 42150 },
+  { timestamp_utc: "2024-01-01T02:00:00Z", close: 41900 },
+  { timestamp_utc: "2024-01-01T03:00:00Z", close: 42300 },
 ];
 
 export default function PricesPage() {
-  const [symbol, setSymbol] = useState<string>("AAPL");
+  const [symbol, setSymbol] = useState<string>("BTCUSDT");
+  const [timeframe, setTimeframe] = useState<string>("1h");
+  const [limit, setLimit] = useState<number>(500);
+
   const [state, setState] = useState<UiState>("idle");
   const [points, setPoints] = useState<PricePoint[]>(mockData);
-  const [infoText, setInfoText] = useState<string>(
-    "Demo data (backend not connected).",
-  );
+  const [infoText, setInfoText] = useState<string>("Demo data.");
 
   useEffect(() => {
     let isCancelled = false;
@@ -36,14 +36,14 @@ export default function PricesPage() {
       setState("loading");
 
       try {
-        const result = await getPrices(symbol);
+        const result = await getPrices({ symbol, timeframe, limit });
         if (isCancelled) {
           return;
         }
 
         if (result.points.length === 0) {
           setPoints(mockData);
-          setInfoText("No data from backend, showing demo data.");
+          setInfoText("Backend returned 0 points, showing demo data.");
           setState("success");
           return;
         }
@@ -57,7 +57,7 @@ export default function PricesPage() {
         }
 
         setPoints(mockData);
-        setInfoText("Backend not running, showing demo data.");
+        setInfoText("Backend not reachable, showing demo data.");
         setState("success");
       }
     }
@@ -67,7 +67,7 @@ export default function PricesPage() {
     return () => {
       isCancelled = true;
     };
-  }, [symbol]);
+  }, [symbol, timeframe, limit]);
 
   const chartData = useMemo(() => {
     return points;
@@ -77,7 +77,14 @@ export default function PricesPage() {
     <div>
       <h2>Prices</h2>
 
-      <div style={{ marginBottom: "12px" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+          flexWrap: "wrap",
+          marginBottom: "12px",
+        }}
+      >
         <label>
           Symbol:&nbsp;
           <input
@@ -86,17 +93,41 @@ export default function PricesPage() {
             style={{ padding: "6px 8px" }}
           />
         </label>
+
+        <label>
+          Timeframe:&nbsp;
+          <input
+            value={timeframe}
+            onChange={(e) => setTimeframe(e.target.value)}
+            style={{ padding: "6px 8px", width: "70px" }}
+          />
+        </label>
+
+        <label>
+          Limit:&nbsp;
+          <input
+            value={String(limit)}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              if (!Number.isFinite(value)) {
+                return;
+              }
+              setLimit(value);
+            }}
+            style={{ padding: "6px 8px", width: "90px" }}
+          />
+        </label>
       </div>
 
       <div style={{ marginBottom: "12px", opacity: 0.8 }}>{infoText}</div>
 
       {state === "loading" && <div>Loading...</div>}
 
-      <div style={{ width: "100%", height: 400 }}>
-        <ResponsiveContainer>
+      <div style={{ width: "100%", height: 400, minHeight: 400, minWidth: 0 }}>
+        <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
+            <XAxis dataKey="timestamp_utc" />
             <YAxis />
             <Tooltip />
             <Line type="monotone" dataKey="close" strokeWidth={2} dot={false} />

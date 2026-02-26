@@ -1,7 +1,7 @@
 ﻿import { requestJson } from "@/shared/api/client";
 
 export type PricePoint = {
-  date: string;
+  timestamp_utc: string;
   close: number;
 };
 
@@ -10,10 +10,17 @@ export type PricesResponse = {
   points: PricePoint[];
 };
 
-export async function getPrices(symbol: string): Promise<PricesResponse> {
-  const encoded = encodeURIComponent(symbol);
+export async function getPrices(args: {
+  symbol: string;
+  timeframe: string;
+  limit: number;
+}): Promise<PricesResponse> {
+  const normalizedSymbol = args.symbol.trim().toUpperCase();
+  const encodedSymbol = encodeURIComponent(normalizedSymbol);
+  const encodedTimeframe = encodeURIComponent(args.timeframe.trim());
+
   return await requestJson<PricesResponse>(
     "GET",
-    `/api/prices?symbol=${encoded}`,
+    `/api/v1/assets/${encodedSymbol}/prices?timeframe=${encodedTimeframe}&limit=${args.limit}`,
   );
 }
