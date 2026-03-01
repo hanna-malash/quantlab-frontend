@@ -15,7 +15,7 @@ const linkStyle = ({ isActive }: { isActive: boolean }) => {
 async function checkBackend(): Promise<boolean> {
   try {
     const result = await getHealth();
-    return result.status === "ok";
+    return (result.status || "").toLowerCase() === "ok";
   } catch {
     return false;
   }
@@ -37,8 +37,11 @@ export default function AppLayout() {
 
     load();
 
+    const intervalId = window.setInterval(load, 8000);
+
     return () => {
       isCancelled = true;
+      window.clearInterval(intervalId);
     };
   }, []);
 

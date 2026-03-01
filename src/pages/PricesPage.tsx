@@ -13,11 +13,12 @@ import type { PricePoint } from "@/shared/api/prices";
 
 type UiState = "idle" | "loading" | "success";
 
-const mockData: PricePoint[] = [
+const demoData: PricePoint[] = [
   { timestamp_utc: "2024-01-01T00:00:00Z", close: 42050 },
   { timestamp_utc: "2024-01-01T01:00:00Z", close: 42150 },
-  { timestamp_utc: "2024-01-01T02:00:00Z", close: 41900 },
-  { timestamp_utc: "2024-01-01T03:00:00Z", close: 42300 },
+  { timestamp_utc: "2024-01-01T02:00:00Z", close: 41980 },
+  { timestamp_utc: "2024-01-01T03:00:00Z", close: 42220 },
+  { timestamp_utc: "2024-01-01T04:00:00Z", close: 42110 },
 ];
 
 export default function PricesPage() {
@@ -26,7 +27,7 @@ export default function PricesPage() {
   const [limit, setLimit] = useState<number>(500);
 
   const [state, setState] = useState<UiState>("idle");
-  const [points, setPoints] = useState<PricePoint[]>(mockData);
+  const [points, setPoints] = useState<PricePoint[]>(demoData);
   const [infoText, setInfoText] = useState<string>("Demo data.");
 
   useEffect(() => {
@@ -41,22 +42,22 @@ export default function PricesPage() {
           return;
         }
 
-        if (result.points.length === 0) {
-          setPoints(mockData);
-          setInfoText("Backend returned 0 points, showing demo data.");
+        if (!result.points || result.points.length === 0) {
+          setPoints(demoData);
+          setInfoText("No data from backend, showing demo data.");
           setState("success");
           return;
         }
 
         setPoints(result.points);
-        setInfoText("Live data from backend.");
+        setInfoText(`Live data from backend (${result.points.length} points).`);
         setState("success");
       } catch {
         if (isCancelled) {
           return;
         }
 
-        setPoints(mockData);
+        setPoints(demoData);
         setInfoText("Backend not reachable, showing demo data.");
         setState("success");
       }
@@ -69,9 +70,7 @@ export default function PricesPage() {
     };
   }, [symbol, timeframe, limit]);
 
-  const chartData = useMemo(() => {
-    return points;
-  }, [points]);
+  const chartData = useMemo(() => points, [points]);
 
   return (
     <div>
@@ -99,22 +98,19 @@ export default function PricesPage() {
           <input
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value)}
-            style={{ padding: "6px 8px", width: "70px" }}
+            style={{ padding: "6px 8px", width: "80px" }}
           />
         </label>
 
         <label>
           Limit:&nbsp;
           <input
-            value={String(limit)}
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              if (!Number.isFinite(value)) {
-                return;
-              }
-              setLimit(value);
-            }}
-            style={{ padding: "6px 8px", width: "90px" }}
+            type="number"
+            value={limit}
+            min={2}
+            max={5000}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            style={{ padding: "6px 8px", width: "110px" }}
           />
         </label>
       </div>
@@ -123,13 +119,22 @@ export default function PricesPage() {
 
       {state === "loading" && <div>Loading...</div>}
 
-      <div style={{ width: "100%", height: 400, minHeight: 400, minWidth: 0 }}>
+      <div style={{ width: "100%", height: 420, minHeight: 260 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp_utc" />
+            <XAxis
+              dataKey="timestamp_utc"
+              tickFormatter={(v) =>
+                String(v).replace("T", " ").replace("Z", "").slice(0, 16)
+              }
+              minTickGap={30}
+            />
             <YAxis />
-            <Tooltip />
+            <Tooltip
+              labelFormatter={(v) => String(v)}
+              formatter={(value) => [value, "close"]}
+            />
             <Line type="monotone" dataKey="close" strokeWidth={2} dot={false} />
           </LineChart>
         </ResponsiveContainer>
