@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -8,33 +8,72 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { getPrices } from "@/shared/api/prices";
-import type { PricePoint } from "@/shared/api/prices";
+import { getAssets, type AssetDto } from "@/shared/api/assets";
+import { getPrices, type PricePoint } from "@/shared/api/prices";
 
-type UiState = "idle" | "loading" | "success";
-
-const demoData: PricePoint[] = [
-  { timestamp_utc: "2024-01-01T00:00:00Z", close: 42050 },
-  { timestamp_utc: "2024-01-01T01:00:00Z", close: 42150 },
-  { timestamp_utc: "2024-01-01T02:00:00Z", close: 41980 },
-  { timestamp_utc: "2024-01-01T03:00:00Z", close: 42220 },
-  { timestamp_utc: "2024-01-01T04:00:00Z", close: 42110 },
-];
+type UiState = "idle" | "loading" | "success" | "error";
 
 export default function PricesPage() {
-  const [symbol, setSymbol] = useState<string>("BTCUSDT");
-  const [timeframe, setTimeframe] = useState<string>("1h");
+  const [assetsState, setAssetsState] = useState<UiState>("idle");
+  const [assets, setAssets] = useState<AssetDto[]>([]);
+  const [assetsError, setAssetsError] = useState<string>("");
+
+  const [symbol, setSymbol] = useState<string>("");
+  const [timeframe, setTimeframe] = useState<string>("");
   const [limit, setLimit] = useState<number>(500);
 
-  const [state, setState] = useState<UiState>("idle");
-  const [points, setPoints] = useState<PricePoint[]>(demoData);
-  const [infoText, setInfoText] = useState<string>("Demo data.");
+  const [pricesState, setPricesState] = useState<UiState>("idle");
+  const [points, setPoints] = useState<PricePoint[]>([]);
+  const [pricesError, setPricesError] = useState<string>("");
 
+  // Load assets list once.
   useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadAssets(): Promise<void> {
+      setAssetsState("loading");
+      setAssetsError("");
+
+      try {
+        const list = await getAssets(controller.signal);
+        setAssets(list);
+
+        if (list.length > 0) {
+          const first = list[0];
+          setSymbol(first.symbol);
+          const firstTimeframe =
+            first.timeframes && first.timeframes.length > 0
+              ? first.timeframes[0]
+              : "";
+          setTimeframe(firstTimeframe);
+        }
+
+        setAssetsState("success");
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Unknown error";
+        setAssetsError(message);
+        setAssetsState("error");
+      }
+    }
+
+    loadAssets();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  // Load prices when symbol/timeframe changes.
+  useEffect(() => {
+    if (symbol === "" || timeframe === "") {
+      return;
+    }
+
     let isCancelled = false;
 
-    async function load(): Promise<void> {
-      setState("loading");
+    async function loadPrices(): Promise<void> {
+      setPricesState("loading");
+      setPricesError("");
 
       try {
         const result = await getPrices({ symbol, timeframe, limit });
@@ -43,27 +82,25 @@ export default function PricesPage() {
         }
 
         if (!result.points || result.points.length === 0) {
-          setPoints(demoData);
-          setInfoText("No data from backend, showing demo data.");
-          setState("success");
+          setPoints([]);
+          setPricesState("success");
           return;
         }
 
         setPoints(result.points);
-        setInfoText(`Live data from backend (${result.points.length} points).`);
-        setState("success");
-      } catch {
+        setPricesState("success");
+      } catch (e) {
         if (isCancelled) {
           return;
         }
 
-        setPoints(demoData);
-        setInfoText("Backend not reachable, showing demo data.");
-        setState("success");
+        const message = e instanceof Error ? e.message : "Unknown error";
+        setPricesError(message);
+        setPricesState("error");
       }
     }
 
-    load();
+    loadPrices();
 
     return () => {
       isCancelled = true;
@@ -72,52 +109,114 @@ export default function PricesPage() {
 
   const chartData = useMemo(() => points, [points]);
 
+  const selectedAsset = useMemo(() => {
+    for (const a of assets) {
+      if (a.symbol === symbol) {
+        return a;
+      }
+    }
+    return null;
+  }, [assets, symbol]);
+
+  const availableTimeframes = selectedAsset
+    ? selectedAsset.timeframes || []
+    : [];
+
   return (
     <div>
       <h2>Prices</h2>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          flexWrap: "wrap",
-          marginBottom: "12px",
-        }}
-      >
-        <label>
-          Symbol:&nbsp;
-          <input
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value)}
-            style={{ padding: "6px 8px" }}
-          />
-        </label>
+      {assetsState === "loading" && <div>Loading assets...</div>}
+      {assetsState === "error" && (
+        <div style={{ opacity: 0.9 }}>
+          Failed to load assets. Backend may be offline.
+          <div style={{ opacity: 0.8 }}>{assetsError}</div>
+        </div>
+      )}
 
-        <label>
-          Timeframe:&nbsp;
-          <input
-            value={timeframe}
-            onChange={(e) => setTimeframe(e.target.value)}
-            style={{ padding: "6px 8px", width: "80px" }}
-          />
-        </label>
+      {assetsState === "success" && assets.length === 0 && (
+        <div>No assets found. Add normalized CSV files on backend side.</div>
+      )}
 
-        <label>
-          Limit:&nbsp;
-          <input
-            type="number"
-            value={limit}
-            min={2}
-            max={5000}
-            onChange={(e) => setLimit(Number(e.target.value))}
-            style={{ padding: "6px 8px", width: "110px" }}
-          />
-        </label>
-      </div>
+      {assetsState === "success" && assets.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            flexWrap: "wrap",
+            marginBottom: "12px",
+          }}
+        >
+          <label>
+            Symbol:&nbsp;
+            <select
+              value={symbol}
+              onChange={(e) => {
+                const newSymbol = e.target.value;
+                setSymbol(newSymbol);
 
-      <div style={{ marginBottom: "12px", opacity: 0.8 }}>{infoText}</div>
+                // When symbol changes, pick first available timeframe.
+                const found = assets.find((a) => a.symbol === newSymbol);
+                const firstTimeframe =
+                  found && found.timeframes && found.timeframes.length > 0
+                    ? found.timeframes[0]
+                    : "";
+                setTimeframe(firstTimeframe);
+              }}
+              style={{ padding: "6px 8px" }}
+            >
+              {assets.map((a) => (
+                <option key={a.symbol} value={a.symbol}>
+                  {a.symbol}
+                </option>
+              ))}
+            </select>
+          </label>
 
-      {state === "loading" && <div>Loading...</div>}
+          <label>
+            Timeframe:&nbsp;
+            <select
+              value={timeframe}
+              onChange={(e) => setTimeframe(e.target.value)}
+              style={{ padding: "6px 8px" }}
+              disabled={availableTimeframes.length === 0}
+            >
+              {availableTimeframes.map((tf) => (
+                <option key={tf} value={tf}>
+                  {tf}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Limit:&nbsp;
+            <input
+              type="number"
+              value={limit}
+              min={2}
+              max={5000}
+              onChange={(e) => setLimit(Number(e.target.value))}
+              style={{ padding: "6px 8px", width: "110px" }}
+            />
+          </label>
+        </div>
+      )}
+
+      {pricesState === "loading" && <div>Loading prices...</div>}
+      {pricesState === "error" && (
+        <div style={{ opacity: 0.9 }}>
+          Failed to load prices.
+          <div style={{ opacity: 0.8 }}>{pricesError}</div>
+        </div>
+      )}
+
+      {pricesState === "success" &&
+        symbol !== "" &&
+        timeframe !== "" &&
+        points.length === 0 && (
+          <div>No price points returned for this symbol/timeframe.</div>
+        )}
 
       <div style={{ width: "100%", height: 420, minHeight: 260 }}>
         <ResponsiveContainer width="100%" height="100%">
