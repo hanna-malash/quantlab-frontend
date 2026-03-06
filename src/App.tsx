@@ -1,10 +1,13 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import AppLayout from "./shared/layout/AppLayout";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+
+import AssetPage from "./pages/AssetPage";
+import AssetsPage from "./pages/AssetsPage";
 import HomePage from "./pages/HomePage";
+import NotFoundPage from "./pages/NotFoundPage";
 import PricesPage from "./pages/PricesPage";
 import ReturnsPage from "./pages/ReturnsPage";
 import VolatilityPage from "./pages/VolatilityPage";
-import NotFoundPage from "./pages/NotFoundPage";
+import AppLayout from "./shared/layout/AppLayout";
 
 export default function App() {
   return (
@@ -15,6 +18,8 @@ export default function App() {
           <Route path="/prices" element={<PricesPage />} />
           <Route path="/returns" element={<ReturnsPage />} />
           <Route path="/volatility" element={<VolatilityPage />} />
+          <Route path="/assets" element={<AssetsPage />} />
+          <Route path="/assets/:symbol" element={<AssetPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
