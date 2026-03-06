@@ -1,5 +1,6 @@
-import { NavLink, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { NavLink, Outlet } from "react-router-dom";
+
 import { getHealth } from "@/shared/api/health";
 
 const linkStyle = ({ isActive }: { isActive: boolean }) => {
@@ -66,6 +67,9 @@ export default function AppLayout() {
         <nav>
           <NavLink to="/" style={linkStyle}>
             Home
+          </NavLink>
+          <NavLink to="/assets" style={linkStyle}>
+            Assets
           </NavLink>
           <NavLink to="/prices" style={linkStyle}>
             Prices
