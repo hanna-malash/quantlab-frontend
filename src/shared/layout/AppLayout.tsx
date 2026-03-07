@@ -74,12 +74,6 @@ export default function AppLayout() {
           <NavLink to="/prices" style={linkStyle}>
             Prices
           </NavLink>
-          <NavLink to="/returns" style={linkStyle}>
-            Returns
-          </NavLink>
-          <NavLink to="/volatility" style={linkStyle}>
-            Volatility
-          </NavLink>
         </nav>
       </header>
 
