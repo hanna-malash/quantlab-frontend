@@ -1,15 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
+import { AssetPriceChart } from "@/features/assets/components/AssetPriceChart";
+import { AssetRangeSelector } from "@/features/assets/components/AssetRangeSelector";
+import { getLimitByRange, type AssetRange } from "@/features/assets/lib/chart";
 import { getAssets, type AssetDto } from "@/shared/api/assets";
 import { getPrices, type PricePoint } from "@/shared/api/prices";
 
@@ -27,9 +21,14 @@ export default function AssetPage() {
   const [points, setPoints] = useState<PricePoint[]>([]);
   const [pricesErrorText, setPricesErrorText] = useState<string>("");
 
-  const limit = 1000;
+  const [selectedRange, setSelectedRange] = useState<AssetRange>("1Y");
+
   const timeframe =
     asset && asset.timeframes.length > 0 ? asset.timeframes[0] : "";
+
+  const limit = useMemo(() => {
+    return getLimitByRange(selectedRange);
+  }, [selectedRange]);
 
   useEffect(() => {
     if (symbol === "") {
@@ -108,9 +107,9 @@ export default function AssetPage() {
     return () => {
       isCancelled = true;
     };
-  }, [symbol, timeframe]);
+  }, [symbol, timeframe, limit]);
 
-  const chartData = useMemo(() => points, [points]);
+  const assetTitle = asset ? `${asset.name} (${asset.symbol})` : symbol;
 
   return (
     <div>
@@ -118,7 +117,7 @@ export default function AssetPage() {
         <Link to="/assets">Back to assets</Link>
       </div>
 
-      <h2>Asset: {symbol}</h2>
+      <h2 style={{ marginBottom: "8px" }}>{assetTitle}</h2>
 
       {assetState === "loading" && <div>Loading asset metadata...</div>}
 
@@ -130,12 +129,21 @@ export default function AssetPage() {
       )}
 
       {assetState === "success" && asset && (
-        <div style={{ marginBottom: "12px", opacity: 0.8 }}>
-          Timeframe: {timeframe}
+        <div style={{ marginBottom: "16px", opacity: 0.8 }}>
+          <div>Class: {asset.asset_class}</div>
+          <div>Currency: {asset.currency}</div>
+          <div>Timeframe: {timeframe}</div>
         </div>
       )}
 
-      {pricesState === "loading" && <div>Loading asset data...</div>}
+      <AssetRangeSelector
+        value={selectedRange}
+        onChange={(range) => {
+          setSelectedRange(range);
+        }}
+      />
+
+      {pricesState === "loading" && <div>Loading price data...</div>}
 
       {pricesState === "error" && (
         <div>
@@ -145,29 +153,12 @@ export default function AssetPage() {
       )}
 
       {pricesState === "success" && points.length === 0 && (
-        <div>No price points found.</div>
+        <div>No price points found for the selected range.</div>
       )}
 
-      <div style={{ width: "100%", height: 420, minHeight: 260 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="timestamp_utc"
-              tickFormatter={(v) =>
-                String(v).replace("T", " ").replace("Z", "").slice(0, 16)
-              }
-              minTickGap={30}
-            />
-            <YAxis />
-            <Tooltip
-              labelFormatter={(v) => String(v)}
-              formatter={(value) => [value, "close"]}
-            />
-            <Line type="monotone" dataKey="close" strokeWidth={2} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      {pricesState === "success" && points.length > 0 && (
+        <AssetPriceChart points={points} selectedRange={selectedRange} />
+      )}
     </div>
   );
 }
