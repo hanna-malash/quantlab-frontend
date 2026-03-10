@@ -2,6 +2,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -10,22 +11,22 @@ import {
 
 import {
   formatChartDate,
-  formatPrice,
+  formatPercent,
   formatTooltipDate,
   type AssetRange,
 } from "@/features/assets/lib/chart";
-import type { PricePoint } from "@/shared/api/prices";
+import type { SeriesPoint } from "@/shared/api/returns";
 
-type AssetPriceChartProps = {
-  points: PricePoint[];
+type AssetReturnsChartProps = {
+  points: SeriesPoint[];
   selectedRange: AssetRange;
 };
 
-export function AssetPriceChart(props: AssetPriceChartProps) {
+export function AssetReturnsChart(props: AssetReturnsChartProps) {
   const { points, selectedRange } = props;
 
   return (
-    <div style={{ width: "100%", height: 420, minHeight: 260 }}>
+    <div style={{ width: "100%", height: 320, minHeight: 220 }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={points}
@@ -40,14 +41,21 @@ export function AssetPriceChart(props: AssetPriceChartProps) {
             minTickGap={30}
           />
           <YAxis
-            width={72}
-            tickFormatter={(value) => formatPrice(Number(value))}
+            width={80}
+            tickFormatter={(value) => formatPercent(Number(value))}
           />
           <Tooltip
             labelFormatter={(value) => formatTooltipDate(String(value))}
-            formatter={(value) => [formatPrice(Number(value)), "Close"]}
+            formatter={(value) => [formatPercent(Number(value)), "Log return"]}
           />
-          <Line type="monotone" dataKey="close" strokeWidth={2} dot={false} />
+          <ReferenceLine y={0} stroke="#71717a" strokeDasharray="4 4" />
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke="#0f766e"
+            strokeWidth={2}
+            dot={false}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>

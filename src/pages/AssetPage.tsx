@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { AssetPriceChart } from "@/features/assets/components/AssetPriceChart";
+import { AssetReturnsChart } from "@/features/assets/components/AssetReturnsChart";
 import { AssetRangeSelector } from "@/features/assets/components/AssetRangeSelector";
 import { getLimitByRange, type AssetRange } from "@/features/assets/lib/chart";
 import { getAssets, type AssetDto } from "@/shared/api/assets";
 import { getPrices, type PricePoint } from "@/shared/api/prices";
+import { getReturns, type SeriesPoint } from "@/shared/api/returns";
 
 type UiState = "idle" | "loading" | "success" | "error";
 
@@ -20,6 +22,10 @@ export default function AssetPage() {
   const [pricesState, setPricesState] = useState<UiState>("idle");
   const [points, setPoints] = useState<PricePoint[]>([]);
   const [pricesErrorText, setPricesErrorText] = useState<string>("");
+
+  const [returnsState, setReturnsState] = useState<UiState>("idle");
+  const [returnsPoints, setReturnsPoints] = useState<SeriesPoint[]>([]);
+  const [returnsErrorText, setReturnsErrorText] = useState<string>("");
 
   const [selectedRange, setSelectedRange] = useState<AssetRange>("1Y");
 
@@ -75,23 +81,24 @@ export default function AssetPage() {
       return;
     }
 
-    let isCancelled = false;
+    const controller = new AbortController();
 
     async function loadPrices(): Promise<void> {
       setPricesState("loading");
       setPricesErrorText("");
 
       try {
-        const result = await getPrices({ symbol, timeframe, limit });
-
-        if (isCancelled) {
-          return;
-        }
+        const result = await getPrices({
+          symbol,
+          timeframe,
+          limit,
+          signal: controller.signal,
+        });
 
         setPoints(result.points || []);
         setPricesState("success");
       } catch (error) {
-        if (isCancelled) {
+        if (controller.signal.aborted) {
           return;
         }
 
@@ -105,7 +112,47 @@ export default function AssetPage() {
     loadPrices();
 
     return () => {
-      isCancelled = true;
+      controller.abort();
+    };
+  }, [symbol, timeframe, limit]);
+
+  useEffect(() => {
+    if (symbol === "" || timeframe === "") {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadReturns(): Promise<void> {
+      setReturnsState("loading");
+      setReturnsErrorText("");
+
+      try {
+        const result = await getReturns({
+          symbol,
+          timeframe,
+          limit,
+          signal: controller.signal,
+        });
+
+        setReturnsPoints(result.points || []);
+        setReturnsState("success");
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        setReturnsErrorText(message);
+        setReturnsState("error");
+      }
+    }
+
+    loadReturns();
+
+    return () => {
+      controller.abort();
     };
   }, [symbol, timeframe, limit]);
 
@@ -159,6 +206,30 @@ export default function AssetPage() {
       {pricesState === "success" && points.length > 0 && (
         <AssetPriceChart points={points} selectedRange={selectedRange} />
       )}
+
+      <div style={{ marginTop: "24px" }}>
+        <h3 style={{ marginBottom: "12px" }}>Returns</h3>
+
+        {returnsState === "loading" && <div>Loading returns data...</div>}
+
+        {returnsState === "error" && (
+          <div>
+            <div>Failed to load returns.</div>
+            <div>{returnsErrorText}</div>
+          </div>
+        )}
+
+        {returnsState === "success" && returnsPoints.length === 0 && (
+          <div>No returns points found for the selected range.</div>
+        )}
+
+        {returnsState === "success" && returnsPoints.length > 0 && (
+          <AssetReturnsChart
+            points={returnsPoints}
+            selectedRange={selectedRange}
+          />
+        )}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-﻿import { env } from "@/shared/config/env";
+import { env } from "@/shared/config/env";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
