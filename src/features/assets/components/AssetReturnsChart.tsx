@@ -20,10 +20,11 @@ import type { SeriesPoint } from "@/shared/api/returns";
 type AssetReturnsChartProps = {
   points: SeriesPoint[];
   selectedRange: AssetRange;
+  timeframe: string;
 };
 
 export function AssetReturnsChart(props: AssetReturnsChartProps) {
-  const { points, selectedRange } = props;
+  const { points, selectedRange, timeframe } = props;
 
   return (
     <div style={{ width: "100%", height: 320, minHeight: 220 }}>
@@ -36,9 +37,10 @@ export function AssetReturnsChart(props: AssetReturnsChartProps) {
           <XAxis
             dataKey="timestamp_utc"
             tickFormatter={(value) =>
-              formatChartDate(String(value), selectedRange)
+              formatChartDate(String(value), selectedRange, timeframe)
             }
             minTickGap={30}
+            tickMargin={8}
           />
           <YAxis
             width={80}

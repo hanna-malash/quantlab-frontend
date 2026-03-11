@@ -10,23 +10,23 @@ import {
 
 import {
   formatChartDate,
-  formatPrice,
+  formatPercent,
   formatTooltipDate,
   type AssetRange,
 } from "@/features/assets/lib/chart";
-import type { PricePoint } from "@/shared/api/prices";
+import type { VolatilityPoint } from "@/shared/api/volatility";
 
-type AssetPriceChartProps = {
-  points: PricePoint[];
+type AssetVolatilityChartProps = {
+  points: VolatilityPoint[];
   selectedRange: AssetRange;
   timeframe: string;
 };
 
-export function AssetPriceChart(props: AssetPriceChartProps) {
+export function AssetVolatilityChart(props: AssetVolatilityChartProps) {
   const { points, selectedRange, timeframe } = props;
 
   return (
-    <div style={{ width: "100%", height: 420, minHeight: 260 }}>
+    <div style={{ width: "100%", height: 320, minHeight: 220 }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={points}
@@ -42,14 +42,20 @@ export function AssetPriceChart(props: AssetPriceChartProps) {
             tickMargin={8}
           />
           <YAxis
-            width={72}
-            tickFormatter={(value) => formatPrice(Number(value))}
+            width={80}
+            tickFormatter={(value) => formatPercent(Number(value))}
           />
           <Tooltip
             labelFormatter={(value) => formatTooltipDate(String(value))}
-            formatter={(value) => [formatPrice(Number(value)), "Close"]}
+            formatter={(value) => [formatPercent(Number(value)), "Volatility"]}
           />
-          <Line type="monotone" dataKey="close" strokeWidth={2} dot={false} />
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke="#b45309"
+            strokeWidth={2}
+            dot={false}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>

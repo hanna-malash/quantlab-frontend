@@ -1,100 +1,108 @@
 # QuantLab Frontend
 
-Frontend application for **QuantLab** — a portfolio project for financial time-series analytics (prices, returns, volatility) with interactive charts and dashboards.
-
-This repository contains the **frontend (UI)** part of the system, implemented with React + TypeScript. The backend is implemented separately using FastAPI.
-
----
+Frontend for **QuantLab**, a backend-first analytics product focused on financial time-series exploration. The frontend is the presentation and orchestration layer for backend-powered analytics such as prices, returns, and volatility.
 
 ## Related repositories
 
 - Backend (FastAPI): https://github.com/hanna-malash/quantlab-backend
 
----
+## Current capabilities
+
+- asset list and asset detail flows
+- asset price chart with range selection
+- returns chart on `AssetPage`
+- volatility chart on `AssetPage`
+- backend health status in the main layout
+- typed API layer for asset, price, returns, and volatility endpoints
+- chart date labels normalized to UTC
+- `MAX` range currently means the latest `5000` points, not unlimited history
 
 ## Tech stack
 
 - Vite
-- React
+- React 19
 - TypeScript
+- React Router
+- Recharts
 - Tailwind CSS
-- shadcn/ui
-- lucide-react
-- React Router (routing)
-- Charts: Recharts (planned)
+- ESLint
+- Prettier
+- Vitest
 
 ## Requirements
 
-- Node.js (LTS recommended)
+- Node.js LTS
 - npm
+- QuantLab backend running locally on `http://127.0.0.1:8000`
 
 ## Local development
 
-### 1) Install dependencies
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-### 2) Start development server
+Start the frontend:
 
 ```bash
 npm run dev
 ```
 
-Application will be available at:
-
-http://localhost:5173
+The app is served at [http://localhost:5173](http://localhost:5173).
 
 ### Backend integration
 
-During development the frontend uses a Vite proxy to communicate with the backend without CORS issues.
+During local development, Vite proxies frontend requests from `/api` to `http://127.0.0.1:8000`.
 
-- Frontend requests: `/api/...`
-- Proxy target: `http://127.0.0.1:8000`
+`AssetPage` currently derives the displayed timeframe from the first timeframe returned by the backend asset metadata.
 
-### Run full stack locally
+## Quality checks
 
-For full-stack setup and backend run instructions, see the backend repository README:
-
-- Backend (FastAPI): https://github.com/hanna-malash/quantlab-backend
-
-Start frontend (in this repository):
+Run the full local check set before opening a PR:
 
 ```bash
-npm run dev
+npm run lint
+npm run typecheck
+npm run test
+npm run format:check
+npm run build
 ```
 
-If the proxy is configured in `vite.config.ts`, requests to `/api` will be forwarded to the backend.
+## Scripts
+
+- `npm run dev` — start the Vite dev server
+- `npm run build` — build the production bundle
+- `npm run preview` — preview the production build locally
+- `npm run lint` — run ESLint
+- `npm run typecheck` — run TypeScript checks without emitting files
+- `npm run test` — run the Vitest suite
+- `npm run test:watch` — run Vitest in watch mode
+- `npm run format` — format the repository with Prettier
+- `npm run format:check` — verify formatting
 
 ## Project structure
 
-```
+```text
 src/
-  App.tsx
-  main.tsx
-  index.css
-  components/
-    ui/        # shadcn/ui components: button, card, input
-  lib/        # utilities
-  assets/     # static images
+  features/
+    assets/
+      components/   # asset-specific charts and controls
+      lib/          # asset chart, date, and range helpers
+  pages/            # route-level orchestration
+  shared/
+    api/            # typed HTTP clients
+    config/         # environment configuration
+    layout/         # app shell
+  components/ui/    # reusable UI primitives
 ```
 
-## Roadmap
+## CI
 
-- Frontend project setup (Vite + TS)
-- Tailwind CSS
-- shadcn/ui integration
-- Application layout and routing
-- Asset price chart
-- Returns and volatility analytics
-- Authentication
-- Deployment
+GitHub Actions runs the frontend check pipeline on pushes and pull requests:
 
-## Available scripts
-
-(See `package.json` — typical scripts for Vite projects)
-
-- `npm run dev` — start dev server
-- `npm run build` — build for production
-- `npm run preview` — locally preview production build
+- lint
+- typecheck
+- test
+- format check
+- production build

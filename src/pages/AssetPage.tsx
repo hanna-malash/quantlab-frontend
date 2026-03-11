@@ -4,10 +4,16 @@ import { Link, useParams } from "react-router-dom";
 import { AssetPriceChart } from "@/features/assets/components/AssetPriceChart";
 import { AssetReturnsChart } from "@/features/assets/components/AssetReturnsChart";
 import { AssetRangeSelector } from "@/features/assets/components/AssetRangeSelector";
-import { getLimitByRange, type AssetRange } from "@/features/assets/lib/chart";
+import { AssetVolatilityChart } from "@/features/assets/components/AssetVolatilityChart";
+import {
+  getLimitByRange,
+  getVolatilityWindow,
+  type AssetRange,
+} from "@/features/assets/lib/chart";
 import { getAssets, type AssetDto } from "@/shared/api/assets";
 import { getPrices, type PricePoint } from "@/shared/api/prices";
 import { getReturns, type SeriesPoint } from "@/shared/api/returns";
+import { getVolatility, type VolatilityPoint } from "@/shared/api/volatility";
 
 type UiState = "idle" | "loading" | "success" | "error";
 
@@ -27,6 +33,12 @@ export default function AssetPage() {
   const [returnsPoints, setReturnsPoints] = useState<SeriesPoint[]>([]);
   const [returnsErrorText, setReturnsErrorText] = useState<string>("");
 
+  const [volatilityState, setVolatilityState] = useState<UiState>("idle");
+  const [volatilityPoints, setVolatilityPoints] = useState<VolatilityPoint[]>(
+    [],
+  );
+  const [volatilityErrorText, setVolatilityErrorText] = useState<string>("");
+
   const [selectedRange, setSelectedRange] = useState<AssetRange>("1Y");
 
   const timeframe =
@@ -35,6 +47,10 @@ export default function AssetPage() {
   const limit = useMemo(() => {
     return getLimitByRange(selectedRange);
   }, [selectedRange]);
+
+  const volatilityWindow = useMemo(() => {
+    return getVolatilityWindow(timeframe);
+  }, [timeframe]);
 
   useEffect(() => {
     if (symbol === "") {
@@ -115,6 +131,47 @@ export default function AssetPage() {
       controller.abort();
     };
   }, [symbol, timeframe, limit]);
+
+  useEffect(() => {
+    if (symbol === "" || timeframe === "") {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadVolatility(): Promise<void> {
+      setVolatilityState("loading");
+      setVolatilityErrorText("");
+
+      try {
+        const result = await getVolatility({
+          symbol,
+          timeframe,
+          window: volatilityWindow,
+          limit,
+          signal: controller.signal,
+        });
+
+        setVolatilityPoints(result.points || []);
+        setVolatilityState("success");
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        setVolatilityErrorText(message);
+        setVolatilityState("error");
+      }
+    }
+
+    loadVolatility();
+
+    return () => {
+      controller.abort();
+    };
+  }, [symbol, timeframe, limit, volatilityWindow]);
 
   useEffect(() => {
     if (symbol === "" || timeframe === "") {
@@ -204,7 +261,11 @@ export default function AssetPage() {
       )}
 
       {pricesState === "success" && points.length > 0 && (
-        <AssetPriceChart points={points} selectedRange={selectedRange} />
+        <AssetPriceChart
+          points={points}
+          selectedRange={selectedRange}
+          timeframe={timeframe}
+        />
       )}
 
       <div style={{ marginTop: "24px" }}>
@@ -227,6 +288,32 @@ export default function AssetPage() {
           <AssetReturnsChart
             points={returnsPoints}
             selectedRange={selectedRange}
+            timeframe={timeframe}
+          />
+        )}
+      </div>
+
+      <div style={{ marginTop: "24px" }}>
+        <h3 style={{ marginBottom: "12px" }}>Volatility</h3>
+
+        {volatilityState === "loading" && <div>Loading volatility data...</div>}
+
+        {volatilityState === "error" && (
+          <div>
+            <div>Failed to load volatility.</div>
+            <div>{volatilityErrorText}</div>
+          </div>
+        )}
+
+        {volatilityState === "success" && volatilityPoints.length === 0 && (
+          <div>No volatility points found for the selected range.</div>
+        )}
+
+        {volatilityState === "success" && volatilityPoints.length > 0 && (
+          <AssetVolatilityChart
+            points={volatilityPoints}
+            selectedRange={selectedRange}
+            timeframe={timeframe}
           />
         )}
       </div>
