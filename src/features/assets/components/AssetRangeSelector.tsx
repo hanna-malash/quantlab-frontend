@@ -31,7 +31,7 @@ export function AssetRangeSelector(props: AssetRangeSelectorProps) {
                 opacity: isActive ? 1 : 0.8,
               }}
             >
-              {range}
+              {range === "MAX" ? "MAX (5K)" : range}
             </button>
           );
         })}
