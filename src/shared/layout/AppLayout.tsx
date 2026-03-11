@@ -71,9 +71,6 @@ export default function AppLayout() {
           <NavLink to="/assets" style={linkStyle}>
             Assets
           </NavLink>
-          <NavLink to="/prices" style={linkStyle}>
-            Prices
-          </NavLink>
         </nav>
       </header>
 
