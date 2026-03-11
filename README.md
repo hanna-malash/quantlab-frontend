@@ -1,6 +1,6 @@
 # QuantLab Frontend
 
-Frontend for **QuantLab**, a backend-first analytics product focused on financial time-series exploration. The frontend is the presentation and orchestration layer for backend-powered analytics such as prices, returns, and volatility.
+Frontend for **QuantLab**, a backend-first analytics product focused on financial time-series exploration. The frontend is the presentation and orchestration layer for backend-powered analytics such as prices, returns, volatility, and drawdown.
 
 ## Related repositories
 
@@ -12,10 +12,12 @@ Frontend for **QuantLab**, a backend-first analytics product focused on financia
 - asset price chart with range selection
 - returns chart on `AssetPage`
 - volatility chart on `AssetPage`
+- drawdown chart on `AssetPage`
 - backend health status in the main layout
-- typed API layer for asset, price, returns, and volatility endpoints
+- typed API layer for asset, price, returns, volatility, and drawdown endpoints
 - chart date labels normalized to UTC
 - `MAX` range currently means the latest `5000` points, not unlimited history
+- legacy standalone `Prices` page removed in favor of the asset analytics dashboard
 
 ## Tech stack
 

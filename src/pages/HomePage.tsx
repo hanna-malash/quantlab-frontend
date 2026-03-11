@@ -1,13 +1,24 @@
+import { Link } from "react-router-dom";
+
 export default function HomePage() {
   return (
     <div>
       <h2>Home</h2>
-      <p>QuantLab is a small dashboard for finance analytics.</p>
+      <p>
+        QuantLab is a backend-first analytics dashboard for exploring asset time
+        series and risk metrics.
+      </p>
       <ul>
-        <li>Prices: price chart</li>
-        <li>Returns: coming soon</li>
-        <li>Volatility: coming soon</li>
+        <li>
+          Asset detail dashboard with price, returns, volatility, and drawdown
+        </li>
+        <li>Range-based chart exploration with UTC-normalized date labels</li>
+        <li>Typed frontend API layer backed by analytics endpoints</li>
       </ul>
+      <p>
+        Start with the <Link to="/assets">Assets</Link> page to explore the
+        analytics dashboard for a symbol.
+      </p>
     </div>
   );
 }

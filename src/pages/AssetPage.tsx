@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
+import { AssetDrawdownChart } from "@/features/assets/components/AssetDrawdownChart";
 import { AssetPriceChart } from "@/features/assets/components/AssetPriceChart";
 import { AssetReturnsChart } from "@/features/assets/components/AssetReturnsChart";
 import { AssetRangeSelector } from "@/features/assets/components/AssetRangeSelector";
@@ -11,6 +12,7 @@ import {
   type AssetRange,
 } from "@/features/assets/lib/chart";
 import { getAssets, type AssetDto } from "@/shared/api/assets";
+import { getDrawdown, type DrawdownPoint } from "@/shared/api/drawdown";
 import { getPrices, type PricePoint } from "@/shared/api/prices";
 import { getReturns, type SeriesPoint } from "@/shared/api/returns";
 import { getVolatility, type VolatilityPoint } from "@/shared/api/volatility";
@@ -38,6 +40,9 @@ export default function AssetPage() {
     [],
   );
   const [volatilityErrorText, setVolatilityErrorText] = useState<string>("");
+  const [drawdownState, setDrawdownState] = useState<UiState>("idle");
+  const [drawdownPoints, setDrawdownPoints] = useState<DrawdownPoint[]>([]);
+  const [drawdownErrorText, setDrawdownErrorText] = useState<string>("");
 
   const [selectedRange, setSelectedRange] = useState<AssetRange>("1Y");
 
@@ -180,6 +185,46 @@ export default function AssetPage() {
 
     const controller = new AbortController();
 
+    async function loadDrawdown(): Promise<void> {
+      setDrawdownState("loading");
+      setDrawdownErrorText("");
+
+      try {
+        const result = await getDrawdown({
+          symbol,
+          timeframe,
+          limit,
+          signal: controller.signal,
+        });
+
+        setDrawdownPoints(result.points || []);
+        setDrawdownState("success");
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        setDrawdownErrorText(message);
+        setDrawdownState("error");
+      }
+    }
+
+    loadDrawdown();
+
+    return () => {
+      controller.abort();
+    };
+  }, [symbol, timeframe, limit]);
+
+  useEffect(() => {
+    if (symbol === "" || timeframe === "") {
+      return;
+    }
+
+    const controller = new AbortController();
+
     async function loadReturns(): Promise<void> {
       setReturnsState("loading");
       setReturnsErrorText("");
@@ -312,6 +357,31 @@ export default function AssetPage() {
         {volatilityState === "success" && volatilityPoints.length > 0 && (
           <AssetVolatilityChart
             points={volatilityPoints}
+            selectedRange={selectedRange}
+            timeframe={timeframe}
+          />
+        )}
+      </div>
+
+      <div style={{ marginTop: "24px" }}>
+        <h3 style={{ marginBottom: "12px" }}>Drawdown</h3>
+
+        {drawdownState === "loading" && <div>Loading drawdown data...</div>}
+
+        {drawdownState === "error" && (
+          <div>
+            <div>Failed to load drawdown.</div>
+            <div>{drawdownErrorText}</div>
+          </div>
+        )}
+
+        {drawdownState === "success" && drawdownPoints.length === 0 && (
+          <div>No drawdown points found for the selected range.</div>
+        )}
+
+        {drawdownState === "success" && drawdownPoints.length > 0 && (
+          <AssetDrawdownChart
+            points={drawdownPoints}
             selectedRange={selectedRange}
             timeframe={timeframe}
           />
