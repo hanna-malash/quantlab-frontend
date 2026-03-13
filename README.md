@@ -8,13 +8,14 @@ Frontend for **QuantLab**, a backend-first analytics product focused on financia
 
 ## Current capabilities
 
-- asset list and asset detail flows
+- assets overview dashboard and asset detail flows
 - asset price chart with range selection
 - returns chart on `AssetPage`
 - volatility chart on `AssetPage`
 - drawdown chart on `AssetPage`
 - backend health status in the main layout
 - typed API layer for asset, price, returns, volatility, and drawdown endpoints
+- typed overview client for `/api/v1/assets/overview`
 - chart date labels normalized to UTC
 - `MAX` range currently means the latest `5000` points, not unlimited history
 - legacy standalone `Prices` page removed in favor of the asset analytics dashboard
@@ -58,6 +59,8 @@ The app is served at [http://localhost:5173](http://localhost:5173).
 During local development, Vite proxies frontend requests from `/api` to `http://127.0.0.1:8000`.
 
 `AssetPage` currently derives the displayed timeframe from the first timeframe returned by the backend asset metadata.
+
+`AssetsPage` now renders backend-provided summary metrics per asset using the overview endpoint.
 
 ## Quality checks
 
