@@ -71,6 +71,9 @@ export default function AppLayout() {
           <NavLink to="/assets" style={linkStyle}>
             Assets
           </NavLink>
+          <NavLink to="/compare" style={linkStyle}>
+            Compare
+          </NavLink>
         </nav>
       </header>
 

@@ -12,6 +12,7 @@ export default function HomePage() {
         <li>
           Asset detail dashboard with price, returns, volatility, and drawdown
         </li>
+        <li>Compare view with backend-powered correlation matrix analysis</li>
         <li>Range-based chart exploration with UTC-normalized date labels</li>
         <li>Typed frontend API layer backed by analytics endpoints</li>
       </ul>
