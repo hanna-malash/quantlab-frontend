@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { NormalizedPerformanceChart } from "@/features/compare/components/NormalizedPerformanceChart";
 import {
   formatCorrelationValue,
   getCommonTimeframes,
@@ -10,10 +11,21 @@ import {
   getCorrelation,
   type CorrelationMatrixDto,
 } from "@/shared/api/correlation";
+import {
+  getNormalizedPerformance,
+  type NormalizedPerformanceDto,
+} from "@/shared/api/normalizedPerformance";
 
 type UiState = "idle" | "loading" | "success" | "error";
 
 const DEFAULT_LIMIT = 365;
+
+const sectionStyle = {
+  border: "1px solid #d4d4d8",
+  borderRadius: "12px",
+  padding: "16px",
+  marginTop: "24px",
+};
 
 export default function ComparePage() {
   const [assetsState, setAssetsState] = useState<UiState>("idle");
@@ -26,6 +38,10 @@ export default function ComparePage() {
   const [matrixState, setMatrixState] = useState<UiState>("idle");
   const [matrix, setMatrix] = useState<CorrelationMatrixDto | null>(null);
   const [matrixError, setMatrixError] = useState<string>("");
+  const [performanceState, setPerformanceState] = useState<UiState>("idle");
+  const [performance, setPerformance] =
+    useState<NormalizedPerformanceDto | null>(null);
+  const [performanceError, setPerformanceError] = useState<string>("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -107,6 +123,46 @@ export default function ComparePage() {
     }
 
     loadCorrelation();
+
+    return () => {
+      controller.abort();
+    };
+  }, [canLoadMatrix, effectiveTimeframe, selectedSymbols]);
+
+  useEffect(() => {
+    if (!canLoadMatrix) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadPerformance(): Promise<void> {
+      setPerformanceState("loading");
+      setPerformanceError("");
+
+      try {
+        const result = await getNormalizedPerformance({
+          symbols: selectedSymbols,
+          timeframe: effectiveTimeframe,
+          limit: DEFAULT_LIMIT,
+          baseValue: 100,
+          signal: controller.signal,
+        });
+        setPerformance(result);
+        setPerformanceState("success");
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        setPerformanceError(message);
+        setPerformanceState("error");
+      }
+    }
+
+    loadPerformance();
 
     return () => {
       controller.abort();
@@ -213,7 +269,12 @@ export default function ComparePage() {
       )}
 
       {canLoadMatrix && matrixState === "success" && matrix && (
-        <div>
+        <div style={sectionStyle}>
+          <h3 style={{ marginTop: "0", marginBottom: "8px" }}>Correlation</h3>
+          <p style={{ marginTop: "0", marginBottom: "12px", opacity: 0.78 }}>
+            Shows how strongly the selected assets move together on the shared
+            timeframe.
+          </p>
           <div style={{ marginBottom: "10px", opacity: 0.8 }}>
             Observations: {matrix.observations}
           </div>
@@ -283,6 +344,39 @@ export default function ComparePage() {
           </div>
         </div>
       )}
+
+      <div style={sectionStyle}>
+        <h3 style={{ marginTop: "0", marginBottom: "8px" }}>
+          Normalized performance
+        </h3>
+        <p style={{ marginTop: "0", marginBottom: "12px", opacity: 0.78 }}>
+          Rebases every selected asset to the same starting value so relative
+          performance is easier to compare over time.
+        </p>
+
+        {canLoadMatrix && performanceState === "loading" && (
+          <div>Loading normalized performance...</div>
+        )}
+
+        {canLoadMatrix && performanceState === "error" && (
+          <div>
+            <div>Failed to load normalized performance.</div>
+            <div>{performanceError}</div>
+          </div>
+        )}
+
+        {canLoadMatrix &&
+          performanceState === "success" &&
+          performance &&
+          performance.series.length > 0 && (
+            <>
+              <div style={{ marginBottom: "10px", opacity: 0.8 }}>
+                Base value: {performance.base_value}
+              </div>
+              <NormalizedPerformanceChart performance={performance} />
+            </>
+          )}
+      </div>
     </div>
   );
 }
