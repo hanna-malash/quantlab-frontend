@@ -5,6 +5,7 @@ import { AssetDrawdownChart } from "@/features/assets/components/AssetDrawdownCh
 import { AssetPriceChart } from "@/features/assets/components/AssetPriceChart";
 import { AssetReturnsChart } from "@/features/assets/components/AssetReturnsChart";
 import { AssetRangeSelector } from "@/features/assets/components/AssetRangeSelector";
+import { AssetRiskSummary } from "@/features/assets/components/AssetRiskSummary";
 import { AssetVolatilityChart } from "@/features/assets/components/AssetVolatilityChart";
 import {
   getLimitByRange,
@@ -14,6 +15,7 @@ import {
 import { getAssets, type AssetDto } from "@/shared/api/assets";
 import { getDrawdown, type DrawdownPoint } from "@/shared/api/drawdown";
 import { getPrices, type PricePoint } from "@/shared/api/prices";
+import { getRiskSummary, type RiskSummaryDto } from "@/shared/api/riskSummary";
 import { getReturns, type SeriesPoint } from "@/shared/api/returns";
 import { getVolatility, type VolatilityPoint } from "@/shared/api/volatility";
 
@@ -43,6 +45,9 @@ export default function AssetPage() {
   const [drawdownState, setDrawdownState] = useState<UiState>("idle");
   const [drawdownPoints, setDrawdownPoints] = useState<DrawdownPoint[]>([]);
   const [drawdownErrorText, setDrawdownErrorText] = useState<string>("");
+  const [riskState, setRiskState] = useState<UiState>("idle");
+  const [riskSummary, setRiskSummary] = useState<RiskSummaryDto | null>(null);
+  const [riskErrorText, setRiskErrorText] = useState<string>("");
 
   const [selectedRange, setSelectedRange] = useState<AssetRange>("1Y");
 
@@ -131,6 +136,46 @@ export default function AssetPage() {
     }
 
     loadPrices();
+
+    return () => {
+      controller.abort();
+    };
+  }, [symbol, timeframe, limit]);
+
+  useEffect(() => {
+    if (symbol === "" || timeframe === "") {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadRiskSummary(): Promise<void> {
+      setRiskState("loading");
+      setRiskErrorText("");
+
+      try {
+        const result = await getRiskSummary({
+          symbol,
+          timeframe,
+          limit,
+          signal: controller.signal,
+        });
+
+        setRiskSummary(result);
+        setRiskState("success");
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        setRiskErrorText(message);
+        setRiskState("error");
+      }
+    }
+
+    loadRiskSummary();
 
     return () => {
       controller.abort();
@@ -312,6 +357,23 @@ export default function AssetPage() {
           timeframe={timeframe}
         />
       )}
+
+      <div style={{ marginTop: "24px" }}>
+        <h3 style={{ marginBottom: "12px" }}>Risk summary</h3>
+
+        {riskState === "loading" && <div>Loading risk summary...</div>}
+
+        {riskState === "error" && (
+          <div>
+            <div>Failed to load risk summary.</div>
+            <div>{riskErrorText}</div>
+          </div>
+        )}
+
+        {riskState === "success" && riskSummary && (
+          <AssetRiskSummary summary={riskSummary} />
+        )}
+      </div>
 
       <div style={{ marginTop: "24px" }}>
         <h3 style={{ marginBottom: "12px" }}>Returns</h3>
