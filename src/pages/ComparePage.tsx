@@ -254,7 +254,14 @@ export default function ComparePage() {
       {assetsState === "success" &&
         selectedSymbols.length >= 2 &&
         commonTimeframes.length === 0 && (
-          <div>No shared timeframe is available for the selected assets.</div>
+          <div>
+            <div>No shared timeframe is available for the selected assets.</div>
+            <div style={{ marginTop: "6px", opacity: 0.8 }}>
+              One or more selected assets, such as BTCUSDT, may not currently
+              overlap with the rest of the compare set. Try removing the asset
+              that breaks the shared timeframe intersection.
+            </div>
+          </div>
         )}
 
       {canLoadMatrix && matrixState === "loading" && (
@@ -345,38 +352,39 @@ export default function ComparePage() {
         </div>
       )}
 
-      <div style={sectionStyle}>
-        <h3 style={{ marginTop: "0", marginBottom: "8px" }}>
-          Normalized performance
-        </h3>
-        <p style={{ marginTop: "0", marginBottom: "12px", opacity: 0.78 }}>
-          Rebases every selected asset to the same starting value so relative
-          performance is easier to compare over time.
-        </p>
+      {canLoadMatrix && (
+        <div style={sectionStyle}>
+          <h3 style={{ marginTop: "0", marginBottom: "8px" }}>
+            Normalized performance
+          </h3>
+          <p style={{ marginTop: "0", marginBottom: "12px", opacity: 0.78 }}>
+            Rebases every selected asset to the same starting value so relative
+            performance is easier to compare over time.
+          </p>
 
-        {canLoadMatrix && performanceState === "loading" && (
-          <div>Loading normalized performance...</div>
-        )}
-
-        {canLoadMatrix && performanceState === "error" && (
-          <div>
-            <div>Failed to load normalized performance.</div>
-            <div>{performanceError}</div>
-          </div>
-        )}
-
-        {canLoadMatrix &&
-          performanceState === "success" &&
-          performance &&
-          performance.series.length > 0 && (
-            <>
-              <div style={{ marginBottom: "10px", opacity: 0.8 }}>
-                Base value: {performance.base_value}
-              </div>
-              <NormalizedPerformanceChart performance={performance} />
-            </>
+          {performanceState === "loading" && (
+            <div>Loading normalized performance...</div>
           )}
-      </div>
+
+          {performanceState === "error" && (
+            <div>
+              <div>Failed to load normalized performance.</div>
+              <div>{performanceError}</div>
+            </div>
+          )}
+
+          {performanceState === "success" &&
+            performance &&
+            performance.series.length > 0 && (
+              <>
+                <div style={{ marginBottom: "10px", opacity: 0.8 }}>
+                  Base value: {performance.base_value}
+                </div>
+                <NormalizedPerformanceChart performance={performance} />
+              </>
+            )}
+        </div>
+      )}
     </div>
   );
 }
