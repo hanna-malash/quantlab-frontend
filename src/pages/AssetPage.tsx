@@ -2,11 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { AssetDrawdownChart } from "@/features/assets/components/AssetDrawdownChart";
+import { AssetMeta } from "@/features/assets/components/AssetMeta";
 import { AssetPriceChart } from "@/features/assets/components/AssetPriceChart";
 import { AssetReturnsChart } from "@/features/assets/components/AssetReturnsChart";
 import { AssetRangeSelector } from "@/features/assets/components/AssetRangeSelector";
 import { AssetRiskSummary } from "@/features/assets/components/AssetRiskSummary";
+import { AssetSectionCard } from "@/features/assets/components/AssetSectionCard";
 import { AssetVolatilityChart } from "@/features/assets/components/AssetVolatilityChart";
+import { DataStateMessage } from "@/features/assets/components/DataStateMessage";
 import {
   getLimitByRange,
   getVolatilityWindow,
@@ -18,6 +21,7 @@ import { getPrices, type PricePoint } from "@/shared/api/prices";
 import { getRiskSummary, type RiskSummaryDto } from "@/shared/api/riskSummary";
 import { getReturns, type SeriesPoint } from "@/shared/api/returns";
 import { getVolatility, type VolatilityPoint } from "@/shared/api/volatility";
+import { Button } from "@/components/ui/button";
 
 type UiState = "idle" | "loading" | "success" | "error";
 
@@ -308,26 +312,26 @@ export default function AssetPage() {
   return (
     <div>
       <div style={{ marginBottom: "12px" }}>
-        <Link to="/assets">Back to assets</Link>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/assets">Back to assets</Link>
+        </Button>
       </div>
 
       <h2 style={{ marginBottom: "8px" }}>{assetTitle}</h2>
 
-      {assetState === "loading" && <div>Loading asset metadata...</div>}
+      {assetState === "loading" && (
+        <DataStateMessage title="Loading asset metadata..." />
+      )}
 
       {assetState === "error" && (
-        <div>
-          <div>Failed to load asset metadata.</div>
-          <div>{assetErrorText}</div>
-        </div>
+        <DataStateMessage
+          title="Failed to load asset metadata."
+          detail={assetErrorText}
+        />
       )}
 
       {assetState === "success" && asset && (
-        <div style={{ marginBottom: "16px", opacity: 0.8 }}>
-          <div>Class: {asset.asset_class}</div>
-          <div>Currency: {asset.currency}</div>
-          <div>Timeframe: {timeframe}</div>
-        </div>
+        <AssetMeta asset={asset} timeframe={timeframe} />
       )}
 
       <AssetRangeSelector
@@ -337,58 +341,62 @@ export default function AssetPage() {
         }}
       />
 
-      {pricesState === "loading" && <div>Loading price data...</div>}
+      <AssetSectionCard title="Price">
+        {pricesState === "loading" && (
+          <DataStateMessage title="Loading price data..." />
+        )}
 
-      {pricesState === "error" && (
-        <div>
-          <div>Failed to load prices.</div>
-          <div>{pricesErrorText}</div>
-        </div>
-      )}
+        {pricesState === "error" && (
+          <DataStateMessage
+            title="Failed to load prices."
+            detail={pricesErrorText}
+          />
+        )}
 
-      {pricesState === "success" && points.length === 0 && (
-        <div>No price points found for the selected range.</div>
-      )}
+        {pricesState === "success" && points.length === 0 && (
+          <DataStateMessage title="No price points found for the selected range." />
+        )}
 
-      {pricesState === "success" && points.length > 0 && (
-        <AssetPriceChart
-          points={points}
-          selectedRange={selectedRange}
-          timeframe={timeframe}
-        />
-      )}
+        {pricesState === "success" && points.length > 0 && (
+          <AssetPriceChart
+            points={points}
+            selectedRange={selectedRange}
+            timeframe={timeframe}
+          />
+        )}
+      </AssetSectionCard>
 
-      <div style={{ marginTop: "24px" }}>
-        <h3 style={{ marginBottom: "12px" }}>Risk summary</h3>
-
-        {riskState === "loading" && <div>Loading risk summary...</div>}
+      <AssetSectionCard title="Risk summary">
+        {riskState === "loading" && (
+          <DataStateMessage title="Loading risk summary..." />
+        )}
 
         {riskState === "error" && (
-          <div>
-            <div>Failed to load risk summary.</div>
-            <div>{riskErrorText}</div>
-          </div>
+          <DataStateMessage
+            title="Failed to load risk summary."
+            detail={riskErrorText}
+          />
         )}
 
         {riskState === "success" && riskSummary && (
           <AssetRiskSummary summary={riskSummary} />
         )}
-      </div>
+      </AssetSectionCard>
 
-      <div style={{ marginTop: "24px" }}>
-        <h3 style={{ marginBottom: "12px" }}>Returns</h3>
-
-        {returnsState === "loading" && <div>Loading returns data...</div>}
+      <AssetSectionCard title="Returns">
+        {returnsState === "loading" && (
+          <DataStateMessage title="Loading returns data..." />
+        )}
 
         {returnsState === "error" && (
-          <div>
-            <div>Failed to load returns.</div>
-            <div>{returnsErrorText}</div>
-          </div>
+          <DataStateMessage
+            title="Failed to load returns."
+            detail={returnsErrorText}
+          />
         )}
 
         {returnsState === "success" && returnsPoints.length === 0 && (
-          <div>No returns points found for the selected range.</div>
+          <DataStateMessage title="No returns points found for the selected range." />
         )}
 
         {returnsState === "success" && returnsPoints.length > 0 && (
@@ -398,22 +406,22 @@ export default function AssetPage() {
             timeframe={timeframe}
           />
         )}
-      </div>
+      </AssetSectionCard>
 
-      <div style={{ marginTop: "24px" }}>
-        <h3 style={{ marginBottom: "12px" }}>Volatility</h3>
-
-        {volatilityState === "loading" && <div>Loading volatility data...</div>}
+      <AssetSectionCard title="Volatility">
+        {volatilityState === "loading" && (
+          <DataStateMessage title="Loading volatility data..." />
+        )}
 
         {volatilityState === "error" && (
-          <div>
-            <div>Failed to load volatility.</div>
-            <div>{volatilityErrorText}</div>
-          </div>
+          <DataStateMessage
+            title="Failed to load volatility."
+            detail={volatilityErrorText}
+          />
         )}
 
         {volatilityState === "success" && volatilityPoints.length === 0 && (
-          <div>No volatility points found for the selected range.</div>
+          <DataStateMessage title="No volatility points found for the selected range." />
         )}
 
         {volatilityState === "success" && volatilityPoints.length > 0 && (
@@ -423,22 +431,22 @@ export default function AssetPage() {
             timeframe={timeframe}
           />
         )}
-      </div>
+      </AssetSectionCard>
 
-      <div style={{ marginTop: "24px" }}>
-        <h3 style={{ marginBottom: "12px" }}>Drawdown</h3>
-
-        {drawdownState === "loading" && <div>Loading drawdown data...</div>}
+      <AssetSectionCard title="Drawdown">
+        {drawdownState === "loading" && (
+          <DataStateMessage title="Loading drawdown data..." />
+        )}
 
         {drawdownState === "error" && (
-          <div>
-            <div>Failed to load drawdown.</div>
-            <div>{drawdownErrorText}</div>
-          </div>
+          <DataStateMessage
+            title="Failed to load drawdown."
+            detail={drawdownErrorText}
+          />
         )}
 
         {drawdownState === "success" && drawdownPoints.length === 0 && (
-          <div>No drawdown points found for the selected range.</div>
+          <DataStateMessage title="No drawdown points found for the selected range." />
         )}
 
         {drawdownState === "success" && drawdownPoints.length > 0 && (
@@ -448,7 +456,7 @@ export default function AssetPage() {
             timeframe={timeframe}
           />
         )}
-      </div>
+      </AssetSectionCard>
     </div>
   );
 }

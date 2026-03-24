@@ -1,5 +1,3 @@
-import type { CSSProperties } from "react";
-
 import {
   formatNullablePercentMetric,
   formatNullableRatioMetric,
@@ -11,26 +9,20 @@ type AssetRiskSummaryProps = {
   summary: RiskSummaryDto;
 };
 
-const sectionStyle: CSSProperties = {
-  border: "1px solid #d4d4d8",
-  borderRadius: "12px",
-  padding: "16px",
-};
-
-const metricGridStyle: CSSProperties = {
+const metricGridStyle = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
   gap: "12px",
   marginTop: "14px",
 };
 
-const metricLabelStyle: CSSProperties = {
+const metricLabelStyle = {
   fontSize: "12px",
   opacity: 0.7,
   marginBottom: "4px",
 };
 
-const metricValueStyle: CSSProperties = {
+const metricValueStyle = {
   fontSize: "16px",
   fontWeight: 600,
 };
@@ -39,7 +31,7 @@ export function AssetRiskSummary(props: AssetRiskSummaryProps) {
   const { summary } = props;
 
   return (
-    <div style={sectionStyle}>
+    <div>
       <div
         style={{
           display: "flex",
@@ -50,9 +42,6 @@ export function AssetRiskSummary(props: AssetRiskSummaryProps) {
         }}
       >
         <div>
-          <div style={{ fontWeight: 700, marginBottom: "4px" }}>
-            Risk summary
-          </div>
           <div style={{ fontSize: "14px", opacity: 0.8 }}>
             Snapshot of return and downside metrics for the selected asset
             window.
