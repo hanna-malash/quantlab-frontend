@@ -11,6 +11,7 @@ Frontend for **QuantLab**, a backend-first analytics product focused on financia
 - assets overview dashboard and asset detail flows
 - compare page with correlation matrix analysis
 - normalized performance chart on the compare page
+- portfolio page with weighted portfolio analytics
 - asset price chart with range selection
 - returns chart on `AssetPage`
 - volatility chart on `AssetPage`
@@ -22,6 +23,7 @@ Frontend for **QuantLab**, a backend-first analytics product focused on financia
 - typed correlation client for `/api/v1/analytics/correlation`
 - typed normalized performance client for `/api/v1/analytics/normalized-performance`
 - typed risk summary client for `/api/v1/assets/{symbol}/risk-summary`
+- typed portfolio client for `/api/v1/portfolio/analytics`
 - chart date labels normalized to UTC
 - `MAX` range currently means the latest `5000` points, not unlimited history
 - legacy standalone `Prices` page removed in favor of the asset analytics dashboard
@@ -73,6 +75,8 @@ During local development, Vite proxies frontend requests from `/api` to `http://
 `ComparePage` also renders backend-provided normalized performance series from a shared base value.
 
 `AssetPage` now renders a backend-provided risk summary block alongside the existing time-series analytics sections.
+
+`PortfolioPage` posts weighted asset allocations to the backend and renders a portfolio summary plus weighted portfolio performance chart.
 
 ## Quality checks
 
