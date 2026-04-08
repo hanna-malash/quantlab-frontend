@@ -5,6 +5,7 @@ import AssetsPage from "./pages/AssetsPage";
 import ComparePage from "./pages/ComparePage";
 import HomePage from "./pages/HomePage";
 import NotFoundPage from "./pages/NotFoundPage";
+import PortfolioPage from "./pages/PortfolioPage";
 import ReturnsPage from "./pages/ReturnsPage";
 import VolatilityPage from "./pages/VolatilityPage";
 import AppLayout from "./shared/layout/AppLayout";
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/returns" element={<ReturnsPage />} />
           <Route path="/volatility" element={<VolatilityPage />} />
           <Route path="/compare" element={<ComparePage />} />
+          <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/assets" element={<AssetsPage />} />
           <Route path="/assets/:symbol" element={<AssetPage />} />
           <Route path="*" element={<NotFoundPage />} />
